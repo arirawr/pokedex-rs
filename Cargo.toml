@@ -1,8 +1,10 @@
 [package]
 name = "pokedex-cli"
+description = "Ari's first CLI in Rust"
 version = "0.1.0"
 authors = ["Ari Vaniderstine <ari.vaniderstine@embark-studios.com>"]
 edition = "2018"
+license = "MIT"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
