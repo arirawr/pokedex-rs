@@ -18,12 +18,32 @@ fn main() {
         .get_matches();
     let input_name = matches.value_of("Pokemon Name").unwrap();
 
-    make_request(input_name);
+    match make_request(input_name) {
+        Err(e) => { 
+            if e.is_http() {
+                match e.url() {
+                    None => println!("No Url given"),
+                    Some(url) => println!("Problem making request to: {}", url),
+                }
+            }
+            // Inspect the internal error and output it
+            if e.is_serialization() {
+            let serde_error = match e.get_ref() {
+                    None => return,
+                    Some(err) => err,
+                };
+                println!("problem parsing information {}", serde_error);
+            }
+            if e.is_redirect() {
+                println!("server redirecting too many times or making loop");
+            }
+        },
+        Ok(_)  => return,
+    }
 }
 
-fn make_request(pokemon: &str) -> Result<(), Box<dyn std::error::Error>> {
+fn make_request(pokemon: &str) -> Result<(), reqwest::Error> {
     let uri = format!("{}{}","https://pokeapi.co/api/v2/pokemon/", pokemon);
     let resp: serde_json::Value = reqwest::get(&uri)?.json()?;
-    println!("{:#?}", resp);
     Ok(())
 }
