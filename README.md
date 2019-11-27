@@ -1,4 +1,4 @@
-## pokedex
+# pokedex
 
 This is primarily a practice project for learning about Rust and Cargo.
 
