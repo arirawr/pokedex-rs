@@ -1,13 +1,15 @@
 extern crate reqwest;
 extern crate clap;
+extern crate console;
 
 use clap::{Arg, App};
+use console::style;
 
 fn main() {
-    println!("Hello, world!");
+    println!("{}", style("Pokedex CLI").bold().magenta());
 
     let matches = App::new("Pokedex")
-        .version("0.1.0")
+        .version("0.1.1")
         .author("Ari Vaniderstine <ari.vaniderstine@embark-studios.com>")
         .about("Ari's first CLI")
         .arg(Arg::with_name("Pokemon Name")
@@ -38,12 +40,30 @@ fn main() {
                 println!("server redirecting too many times or making loop");
             }
         },
-        Ok(_)  => return,
+        Ok(response)  => {
+            let mut data = response;
+            print_info(&mut data);
+        }
     }
 }
 
-fn make_request(pokemon: &str) -> Result<(), reqwest::Error> {
+fn make_request(pokemon: &str) -> Result<serde_json::Value, reqwest::Error> {
     let uri = format!("{}{}","https://pokeapi.co/api/v2/pokemon/", pokemon);
-    let resp: serde_json::Value = reqwest::get(&uri)?.json()?;
-    Ok(())
+    let mut resp: serde_json::Value = reqwest::get(&uri)?.json()?;
+    Ok(resp)
+}
+
+fn print_info(json: &mut serde_json::Value) {
+    println!("ID: {}", style(json["id"].as_u64().unwrap()).cyan());
+    println!("Name: {}", style(json["name"].as_str().unwrap()).magenta());
+    println!("Types: {}", style(get_types(&mut json["types"])).magenta());
+}
+
+fn get_types(type_array: &mut serde_json::Value) -> String {
+    if type_array[1].is_object() {
+        return format!("{}, {}", type_array[0]["type"]["name"].as_str().unwrap(), type_array[1]["type"]["name"].as_str().unwrap());
+    }
+    else {
+        return type_array[0]["type"]["name"].as_str().unwrap().to_string();
+    }
 }
