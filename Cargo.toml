@@ -1,5 +1,5 @@
 [package]
-name = "pokedex-cli"
+name = "pokedex"
 description = "Ari's first CLI in Rust"
 version = "0.1.0"
 authors = ["Ari Vaniderstine <ari.vaniderstine@embark-studios.com>"]

@@ -6,7 +6,7 @@ use clap::{Arg, App};
 fn main() {
     println!("Hello, world!");
 
-    let matches = App::new("Pokedex-CLI")
+    let matches = App::new("Pokedex")
         .version("0.1.0")
         .author("Ari Vaniderstine <ari.vaniderstine@embark-studios.com>")
         .about("Ari's first CLI")
