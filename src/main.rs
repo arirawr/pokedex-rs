@@ -23,19 +23,30 @@ struct TypeSlot {
     type_object: Type,
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Debug)]
 struct Type {
     name: String,
 }
 
-#[derive(Deserialize, Default)]
+#[derive(Deserialize, Default, Debug)]
 struct TypeEffectiveness {
-    no_damage_to: Option<Vec<Type>>,
-    no_damage_from: Option<Vec<Type>>,
-    double_damage_to: Option<Vec<Type>>,
-    double_damage_from: Option<Vec<Type>>,
-    half_damage_to: Option<Vec<Type>>,
-    half_damage_from: Option<Vec<Type>>,
+    #[serde(default)]
+    no_damage_to: Vec<Type>,
+    #[serde(default)]
+    no_damage_from: Vec<Type>,
+    #[serde(default)]
+    double_damage_to: Vec<Type>,
+    #[serde(default)]
+    double_damage_from: Vec<Type>,
+    #[serde(default)]
+    half_damage_to: Vec<Type>,
+    #[serde(default)]
+    half_damage_from: Vec<Type>,
+}
+
+#[derive(Deserialize, Debug)]
+struct TypeFull {
+    damage_relations: TypeEffectiveness,
 }
 
 
@@ -61,25 +72,23 @@ fn get_pokemon(name: &str) {
     match make_request(name) {
         Err(e) => handle_error(e),
         Ok(pokemon)  => {
-            let mut data = pokemon;
-            print_pokemon(&mut data);
+            print_pokemon(pokemon);
         }
     }
 }
 
 fn make_request(pokemon: &str) -> Result<Pokemon, reqwest::Error> {
-    let uri = format!("{}{}","https://pokeapi.co/api/v2/pokemon/", pokemon);
-    let resp: Pokemon = reqwest::get(&uri)?.json()?;
-    Ok(resp)
+    let uri = format!("https://pokeapi.co/api/v2/pokemon/{}", pokemon);
+    reqwest::get(&uri)?.json()
 }
 
-fn print_pokemon(p: &mut Pokemon) {
+fn print_pokemon(p: Pokemon) {
     println!("ID: {}", style(&p.id).cyan());
     println!("Name: {}", style(&p.name).magenta());
     println!("Height: {}m", p.height as f32/10.0);
     println!("Weight: {}kg", p.weight as f32/10.0);
 
-    let ptypes = get_pokemon_types(&mut p.types);
+    let ptypes = get_pokemon_types(p.types);
     print_types(ptypes);
 }
 
@@ -89,53 +98,39 @@ fn print_types(ptypes: Vec<String>) {
     match get_type_effectiveness(ptypes) {
         Err(e) => handle_error(e),
         Ok(res)  => {
-            if res.double_damage_from.is_some() {
-                print!("Double damage from: ");
-                for t in res.double_damage_from {
-                    //print!("{}", t["name"]);
-                }
-            }
+            // TODO: pretty print for type effectiveness
+            // print!("Double damage from: ");
+            // for t in res.double_damage_from {
+            //     print!("{}", t.name);
+            // }
         }
     }
 
 }
 
-fn get_pokemon_types(type_array: &mut Vec<TypeSlot>) -> Vec<String> {
+fn get_pokemon_types(type_array: Vec<TypeSlot>) -> Vec<String> {
     let mut types = Vec::new();
-    let temp = type_array;
+    let mut temp = type_array;
     temp.sort_by(|a, b| a.slot.cmp(&b.slot));
     for t in temp {
         let type_name = t.type_object.name.to_string();
         types.push(type_name);
     }
-    return types;
+    types
 }
 
 fn get_type_effectiveness(types: Vec<String>) -> Result<TypeEffectiveness, reqwest::Error> {
     let mut resp: TypeEffectiveness = TypeEffectiveness::default();
     for t in types {
         let uri = format!("https://pokeapi.co/api/v2/type/{}", t);
-        resp = reqwest::get(&uri)?.json()?;
+        //TODO: Calculate type effectiveness for Pokemon with multiple types
+        let res: TypeFull = reqwest::get(&uri)?.json()?;
+        resp = res.damage_relations;
+        //println!("{:#?}", resp);
     }
     Ok(resp)
 }
 
 fn handle_error(e: reqwest::Error) {
-    if e.is_http() {
-        match e.url() {
-            None => println!("No Url given"),
-            Some(url) => println!("Problem making request to: {}", url),
-        }
-    }
-    // Inspect the internal error and output it
-    if e.is_serialization() {
-    let serde_error = match e.get_ref() {
-            None => return,
-            Some(err) => err,
-        };
-        println!("problem parsing information {}", serde_error);
-    }
-    if e.is_redirect() {
-        println!("server redirecting too many times or making loop");
-    }
+    println!("{}", e);
 }
