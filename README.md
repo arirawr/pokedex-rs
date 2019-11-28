@@ -1,5 +1,7 @@
 # pokedex
 
+[![Latest version](https://img.shields.io/crates/v/pokedex.svg)](https://crates.io/crates/pokedex)
+
 This is primarily a practice project for learning about Rust and Cargo.
 
 If you _really_ want to use it, here's how:
