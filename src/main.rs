@@ -1,9 +1,31 @@
 extern crate reqwest;
 extern crate clap;
 extern crate console;
+extern crate serde;
 
 use clap::{Arg, App};
 use console::style;
+use serde::{Deserialize};
+
+#[derive(Deserialize)]
+struct Pokemon {
+    id: u64,
+    name: String,
+    types: Vec<TypeSlot>,
+}
+
+#[derive(Deserialize)]
+struct TypeSlot {
+    slot: u64, 
+    #[serde(rename = "type")]
+    type_object: Type,
+}
+
+#[derive(Deserialize)]
+struct Type {
+    name: String,
+    url: String,
+}
 
 fn main() {
     println!("{}", style("Pokedex CLI").bold().magenta());
@@ -21,25 +43,7 @@ fn main() {
     let input_name = matches.value_of("Pokemon Name").unwrap();
 
     match make_request(input_name) {
-        Err(e) => { 
-            if e.is_http() {
-                match e.url() {
-                    None => println!("No Url given"),
-                    Some(url) => println!("Problem making request to: {}", url),
-                }
-            }
-            // Inspect the internal error and output it
-            if e.is_serialization() {
-            let serde_error = match e.get_ref() {
-                    None => return,
-                    Some(err) => err,
-                };
-                println!("problem parsing information {}", serde_error);
-            }
-            if e.is_redirect() {
-                println!("server redirecting too many times or making loop");
-            }
-        },
+        Err(e) => handle_error(e),
         Ok(response)  => {
             let mut data = response;
             print_info(&mut data);
@@ -47,23 +51,44 @@ fn main() {
     }
 }
 
-fn make_request(pokemon: &str) -> Result<serde_json::Value, reqwest::Error> {
+fn make_request(pokemon: &str) -> Result<Pokemon, reqwest::Error> {
     let uri = format!("{}{}","https://pokeapi.co/api/v2/pokemon/", pokemon);
-    let mut resp: serde_json::Value = reqwest::get(&uri)?.json()?;
+    let resp: Pokemon = reqwest::get(&uri)?.json()?;
     Ok(resp)
 }
 
-fn print_info(json: &mut serde_json::Value) {
-    println!("ID: {}", style(json["id"].as_u64().unwrap()).cyan());
-    println!("Name: {}", style(json["name"].as_str().unwrap()).magenta());
-    println!("Types: {}", style(get_types(&mut json["types"])).magenta());
+fn print_info(p: &mut Pokemon) {
+    println!("ID: {}", style(&p.id).cyan());
+    println!("Name: {}", style(&p.name).magenta());
+    println!("Types: {}", style(get_types(&mut p.types)).magenta());
 }
 
-fn get_types(type_array: &mut serde_json::Value) -> String {
-    if type_array[1].is_object() {
-        return format!("{}, {}", type_array[0]["type"]["name"].as_str().unwrap(), type_array[1]["type"]["name"].as_str().unwrap());
+fn get_types(type_array: &mut Vec<TypeSlot>) -> String {
+    let mut type_string = String::new();
+    type_array.sort_by(|a, b| a.slot.cmp(&b.slot));
+    for t in type_array {
+        if t.slot > 1 { type_string.push_str(", ") }
+        type_string.push_str(&t.type_object.name);
     }
-    else {
-        return type_array[0]["type"]["name"].as_str().unwrap().to_string();
+    return type_string;
+}
+
+fn handle_error(e: reqwest::Error) {
+    if e.is_http() {
+        match e.url() {
+            None => println!("No Url given"),
+            Some(url) => println!("Problem making request to: {}", url),
+        }
+    }
+    // Inspect the internal error and output it
+    if e.is_serialization() {
+    let serde_error = match e.get_ref() {
+            None => return,
+            Some(err) => err,
+        };
+        println!("problem parsing information {}", serde_error);
+    }
+    if e.is_redirect() {
+        println!("server redirecting too many times or making loop");
     }
 }
