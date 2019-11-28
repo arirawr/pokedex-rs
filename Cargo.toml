@@ -1,7 +1,7 @@
 [package]
 name = "pokedex"
 description = "Get Pokemon data from the command line"
-version = "0.1.5"
+version = "0.1.6"
 authors = ["Ari Vaniderstine <ari.vaniderstine@embark-studios.com>"]
 edition = "2018"
 license = "MIT"
