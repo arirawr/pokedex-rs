@@ -12,6 +12,8 @@ struct Pokemon {
     id: u64,
     name: String,
     types: Vec<TypeSlot>,
+    height: u64,
+    weight: u64,
 }
 
 #[derive(Deserialize)]
@@ -61,6 +63,8 @@ fn print_info(p: &mut Pokemon) {
     println!("ID: {}", style(&p.id).cyan());
     println!("Name: {}", style(&p.name).magenta());
     println!("Types: {}", style(get_types(&mut p.types)).magenta());
+    println!("Height: {}m", p.height as f32/10.0);
+    println!("Weight: {}kg", p.weight as f32/10.0);
 }
 
 fn get_types(type_array: &mut Vec<TypeSlot>) -> String {
