@@ -100,23 +100,23 @@ fn print_types(ptypes: Vec<String>) {
         Ok(res)  => {
             // TODO: pretty print for type effectiveness
             println!("{}", style("\nType Effectiveness").bold());
-            print!("Double damage from: ");
-            let msg = format!("{}", style(type_to_string_array(res.double_damage_from).join(", ")).yellow());
+            print!("2x damage from: ");
+            let msg = format!("{}", style(types_to_string(res.double_damage_from)).yellow());
             println!("{}", msg);
-            print!("Double damage to: ");
-            let msg = format!("{}", style(type_to_string_array(res.double_damage_to).join(", ")).yellow());
+            print!("2x damage to: ");
+            let msg = format!("{}", style(types_to_string(res.double_damage_to)).yellow());
             println!("{}", msg);
-            print!("Half damage from: ");
-            let msg = format!("{}", style(type_to_string_array(res.half_damage_from).join(", ")).yellow());
+            print!("1/2 damage from: ");
+            let msg = format!("{}", style(types_to_string(res.half_damage_from)).yellow());
             println!("{}", msg);
-            print!("Half damage to: ");
-            let msg = format!("{}", style(type_to_string_array(res.half_damage_to).join(", ")).yellow());
+            print!("1/2 damage to: ");
+            let msg = format!("{}", style(types_to_string(res.half_damage_to)).yellow());
             println!("{}", msg);
-            print!("No damage from: ");
-            let msg = format!("{}", style(type_to_string_array(res.no_damage_from).join(", ")).yellow());
+            print!("0 damage from: ");
+            let msg = format!("{}", style(types_to_string(res.no_damage_from)).yellow());
             println!("{}", msg);
-            print!("No damage to: ");
-            let msg = format!("{}", style(type_to_string_array(res.no_damage_to).join(", ")).yellow());
+            print!("0 damage to: ");
+            let msg = format!("{}", style(types_to_string(res.no_damage_to)).yellow());
             println!("{}", msg);
         }
     }
@@ -134,14 +134,13 @@ fn get_pokemon_types(type_array: Vec<TypeSlot>) -> Vec<String> {
     types
 }
 
-fn type_to_string_array(type_array: Vec<Type>) -> Vec<String> {
+fn types_to_string(type_array: Vec<Type>) -> String {
     let mut array = Vec::new();
-    let mut temp = type_array;
-    for t in temp {
+    for t in type_array {
         let type_name = t.name.to_string();
         array.push(type_name);
     }
-    array
+    array.join(", ")
 }
 
 fn get_type_effectiveness(types: Vec<String>) -> Result<TypeEffectiveness, reqwest::Error> {
