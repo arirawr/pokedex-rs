@@ -99,10 +99,25 @@ fn print_types(ptypes: Vec<String>) {
         Err(e) => handle_error(e),
         Ok(res)  => {
             // TODO: pretty print for type effectiveness
-            // print!("Double damage from: ");
-            // for t in res.double_damage_from {
-            //     print!("{}", t.name);
-            // }
+            println!("{}", style("\nType Effectiveness").bold());
+            print!("Double damage from: ");
+            let msg = format!("{}", style(type_to_string_array(res.double_damage_from).join(", ")).yellow());
+            println!("{}", msg);
+            print!("Double damage to: ");
+            let msg = format!("{}", style(type_to_string_array(res.double_damage_to).join(", ")).yellow());
+            println!("{}", msg);
+            print!("Half damage from: ");
+            let msg = format!("{}", style(type_to_string_array(res.half_damage_from).join(", ")).yellow());
+            println!("{}", msg);
+            print!("Half damage to: ");
+            let msg = format!("{}", style(type_to_string_array(res.half_damage_to).join(", ")).yellow());
+            println!("{}", msg);
+            print!("No damage from: ");
+            let msg = format!("{}", style(type_to_string_array(res.no_damage_from).join(", ")).yellow());
+            println!("{}", msg);
+            print!("No damage to: ");
+            let msg = format!("{}", style(type_to_string_array(res.no_damage_to).join(", ")).yellow());
+            println!("{}", msg);
         }
     }
 
@@ -117,6 +132,16 @@ fn get_pokemon_types(type_array: Vec<TypeSlot>) -> Vec<String> {
         types.push(type_name);
     }
     types
+}
+
+fn type_to_string_array(type_array: Vec<Type>) -> Vec<String> {
+    let mut array = Vec::new();
+    let mut temp = type_array;
+    for t in temp {
+        let type_name = t.name.to_string();
+        array.push(type_name);
+    }
+    array
 }
 
 fn get_type_effectiveness(types: Vec<String>) -> Result<TypeEffectiveness, reqwest::Error> {
