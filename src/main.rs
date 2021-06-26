@@ -1,3 +1,4 @@
+#![allow(dead_code)]
 //#![feature(allocator_api)]
 //extern crate reqwest;
 //extern crate clap;
@@ -8,8 +9,8 @@ use clap::{Arg, App};
 use console::style;
 use serde::{Deserialize};
 use serde_json;
-#[macro_use]
-extern crate lazy_static;
+//extern crate levenshtein;
+use levenshtein::levenshtein;
 
 #[derive(Deserialize)]
 struct Pokemon {
@@ -66,13 +67,46 @@ fn main() -> Result<(), serde_json::error::Error> {
                  .index(1)
                  .help("Name of pokemon"))
         .get_matches();
-    println!("{:?}", &matches);
-    let input_name: String = matches.value_of("Pokemon Name").unwrap().into();
-    let dex_json = include_str!("pokemon-dex.json");
-    let pokedex: Vec<PokedexEntry> = serde_json::from_str(&dex_json)?;
-    //println!("{:#?}", &pokedex);
-    let entry: PokedexEntry = pokedex.into_iter().filter(|entry| &entry.name == &input_name).next().unwrap();
-    print_pokemon(entry);
+
+    let mut input_name: String = matches.value_of("Pokemon Name").unwrap().into();
+    static dex_json: &'static str = include_str!("pokemon-dex.json");
+    
+    let pokedex: Vec<PokedexEntry> = serde_json::from_str(&dex_json)?; 
+    unsafe {
+        let mut max_dist: usize = 3 as usize;
+        let mut stack_name = &mut input_name;
+        for entry in &pokedex {
+            let mut dist = levenshtein(&entry.name, &stack_name);
+            //println!("Lev Dist: &entry.name, &stack_name = {:?}", &dist);
+            //if dist as u32 == 1 {
+            //    println!("Matched: {}", &entry.name);
+            //}
+            if &dist < &max_dist {
+                *stack_name = entry.name.clone();
+                max_dist = dist;
+            }
+        }
+        //println!("{:?}", &stack_name);
+        let entry: Option<PokedexEntry> = pokedex
+            .into_iter()
+            .filter(|entry| &entry.name == stack_name)
+            .next();
+
+        print_pokemon(entry.unwrap());
+    }
+
+    /*let entry: Option<PokedexEntry> = pokedex.into_iter().filter(|entry| &entry.name == &input_name).next();
+    match entry {
+        Some(pokemon) => {
+            print_pokemon(pokemon);
+        },
+        None => {
+            let dirty_dup: Vec<PokedexEntry> = serde_json::from_str(&dex_json)?;
+            let names: Vec<String> = dirty_dup.into_iter().map(|entry| entry.name).collect();
+           
+            eprintln!("Sorry, couldn't find '{}'", &input_name);
+        }
+    }*/
     Ok(())
 }
 
