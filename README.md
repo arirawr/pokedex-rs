@@ -1,12 +1,9 @@
 # 🧢 pokedex
 
-[![Latest version](https://img.shields.io/crates/v/pokedex.svg)](https://crates.io/crates/pokedex)
-
-This is primarily a practice project for learning about Rust and Cargo.
-You can [follow me on Twitter](https://twitter.com/AriVanider) for stuff about community and Rust and game dev.
+<!--[![Latest version](https://img.shields.io/crates/v/pokedex.svg)](https://crates.io/crates/pokedex)
 
 If you _really_ want to use this tool, here's how:
-
+-->
 1. `cargo install pokedex -f`
 2. On the command line, run `pokedex <name_of_pokemon>`
 3. Profit
