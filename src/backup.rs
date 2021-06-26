@@ -2,11 +2,10 @@
 //extern crate clap;
 //extern crate console;
 //extern crate serde;
-//use std::include_str;
+
 use clap::{Arg, App};
 use console::style;
 use serde::{Deserialize};
-use serde_json;
 
 #[derive(Deserialize)]
 struct Pokemon {
@@ -50,6 +49,7 @@ struct TypeFull {
     damage_relations: TypeEffectiveness,
 }
 
+
 fn main() {
     println!("{}", style("Pokedex CLI").bold().magenta());
 
@@ -64,33 +64,8 @@ fn main() {
                  .help("Name of pokemon"))
         .get_matches();
     let input_name = matches.value_of("Pokemon Name").unwrap();
-    let pokedex: Vec<PokedexEntry> = serde_json::from_str(std::include_str!("pokemon-dex.json")).unwrap();
 
-}
-#[derive(Debug, Deserialize)]
-struct PokedexEntry {
-    id: u32,
-    name: String,
-    stage: u32,
-    galar_dex: Option<String>,
-    base_stats: [u32; 6],
-    ev_yield: [u32; 6],
-    abilities: Vec<String>,
-    types: Vec<String>,
-    items: Vec<String>,
-    exp_group: String,
-    egg_groups: Vec<String>,
-    hatch_cycles: Option<u32>,
-    height: f32,
-    weight: f32,
-    color: String, 
-    level_up_moves: Vec<(u32, String)>,
-    egg_moves: Vec<String>,
-    tms: Vec<u32>,
-    trs: Vec<u32>,
-    evolutions: Vec<serde_json::Map<String, serde_json::Value>>,
-    description: String,
-    catch_rate: Option<u32>
+    get_pokemon(input_name);
 }
 
 fn get_pokemon(name: &str) {
