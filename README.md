@@ -4,9 +4,10 @@
 
 If you _really_ want to use this tool, here's how:
 -->
-1. `cargo install pokedex -f`
-2. On the command line, run `pokedex <name_of_pokemon>`
-3. Profit
+1. `git clone` 
+2. `cd pokedex-rs && cargo install --path .`
+3. On the command line, run `pokedex <name_of_pokemon>`
+4. Profit
 
 Current response format:
 
