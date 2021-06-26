@@ -63,9 +63,10 @@ fn main() {
                  .index(1)
                  .help("Name of pokemon"))
         .get_matches();
-    let input_name = matches.value_of("Pokemon Name").unwrap();
+    let input_name: String = matches.value_of("Pokemon Name").unwrap().into();
     let pokedex: Vec<PokedexEntry> = serde_json::from_str(std::include_str!("pokemon-dex.json")).unwrap();
-
+    let mon: PokedexEntry = pokedex.into_iter().filter(|entry| &entry.name == &input_name).last().unwrap();
+    print_pokemon(mon);
 }
 #[derive(Debug, Deserialize)]
 struct PokedexEntry {
@@ -92,7 +93,7 @@ struct PokedexEntry {
     description: String,
     catch_rate: Option<u32>
 }
-
+/*
 fn get_pokemon(name: &str) {
     match make_request(name) {
         Err(e) => handle_error(e),
@@ -101,20 +102,38 @@ fn get_pokemon(name: &str) {
         }
     }
 }
-
+*/
 fn make_request(pokemon: &str) -> Result<Pokemon, reqwest::Error> {
     let uri = format!("https://pokeapi.co/api/v2/pokemon/{}", pokemon);
     reqwest::get(&uri)?.json()
 }
 
-fn print_pokemon(p: Pokemon) {
-    println!("ID: {}", style(&p.id).cyan());
-    println!("Name: {}", style(&p.name).magenta());
-    println!("Height: {}m", p.height as f32/10.0);
-    println!("Weight: {}kg", p.weight as f32/10.0);
-
-    let ptypes = get_pokemon_types(p.types);
-    print_types(ptypes);
+//fn print_pokemon(p: Pokemon) {
+fn print_pokemon(p: PokedexEntry) {
+    println!("ID: {:#?}", style(&p.id).cyan());
+    println!("Name: {:#?}", style(&p.name).magenta());
+    println!("Height: {:#?}m", p.height as f32/10.0);
+    println!("Weight: {:#?}kg", p.weight as f32/10.0);
+    println!("Stage: {:#?}", &p.stage);
+    println!("Galar dex: {:#?}", &p.galar_dex);
+    println!("Base stats: {:#?}", &p.base_stats);
+    println!("Ev yield: {:#?}", &p.ev_yield);
+    println!("Abilities: {:#?}", &p.abilities);
+    println!("Types: {:#?}", &p.types);
+    println!("Items: {:#?}", &p.items);
+    println!("Exp group: {:#?}", &p.exp_group);
+    println!("Egg groups: {:#?}", &p.egg_groups);
+    println!("Hatch cycles: {:#?}", &p.hatch_cycles);
+    println!("Color: {:#?}", &p.color);
+    println!("Level up moves: {:#?}", &p.level_up_moves);
+    println!("Egg moves: {:#?}", &p.egg_moves);
+    println!("Tms: {:#?}", &p.tms);
+    println!("Trs: {:#?}", &p.trs);
+    println!("Evolutions: {:#?}", &p.evolutions);
+    println!("Description: {:#?}", &p.description);
+    println!("Catch rate: {:#?}", &p.catch_rate);
+    //let ptypes = get_pokemon_types(p.types);
+    //print_types(ptypes);
 }
 
 fn print_types(ptypes: Vec<String>) {
