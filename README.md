@@ -11,13 +11,7 @@ If you _really_ want to use this tool, here's how:
 
 Current response format:
 
-```
-ID: 149
-Name: dragonite
-Height: 2.2m
-Weight: 210kg
-Types: dragon, flying
-```
+![Searching for "Grookie"](./data/readme-inclusion.png)]
 
 #### Known Issues
 
