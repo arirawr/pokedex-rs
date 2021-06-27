@@ -1,18 +1,18 @@
 #![allow(dead_code)]
-//#![feature(allocator_api)]
-//extern crate reqwest;
-//extern crate clap;
-//extern crate console;
-//extern crate serde;
-//use std::include_str;
-use clap::{Arg, App};
+use clap::{App, AppSettings, Arg, ValueHint};
+use clap_generate::generators::{Bash, Elvish, Fish, PowerShell, Zsh};
+use clap_generate::{generate, Generator};
 use console::style;
 use serde::{Deserialize};
 use serde_json;
-//extern crate levenshtein;
 use levenshtein::levenshtein;
 use std::convert::TryInto;
 use std::collections::HashSet;
+use std::io;
+use std::fmt;
+use comfy_table::*;
+use comfy_table::presets::UTF8_FULL;
+use comfy_table::modifiers::UTF8_ROUND_CORNERS;
 
 #[derive(Deserialize)]
 struct Pokemon {
@@ -54,63 +54,77 @@ struct TypeFull {
     damage_relations: TypeEffectiveness,
 }
 
+fn print_completions<G: Generator>(app: &mut App) {
+    generate::<G, _>(app, app.get_name().to_string(), &mut io::stdout());
+}
+
 fn main() -> Result<(), serde_json::error::Error> {
     println!("{}", style("Pokedex CLI").bold().magenta());
+    let matches = build_cli().get_matches();
 
-    let matches = App::new("Pokedex")
-        .version("0.2.0")
-        .author("Ari Vaniderstine <ari.vaniderstine@embark-studios.com>; David Golembiowski <david[āŧ]dgolembiowski[doŧ]com>")
-        .about("Pokedex CLI built with Rust")
-        .arg(Arg::with_name("Pokemon Name")
-                 .required(true)
-                 .takes_value(true)
-                 .index(1)
-                 .help("Name of pokemon"))
-        .get_matches();
+    if let Some(generator) = &matches.value_of("gen") {
+        let mut app = build_cli();
+        eprintln!("Generating completion file for {}...", generator);
+        match generator {
+            &"bash" => print_completions::<Bash>(&mut app),
+            &"elvish" => print_completions::<Elvish>(&mut app),
+            &"fish" => print_completions::<Fish>(&mut app),
+            &"powershell" => print_completions::<PowerShell>(&mut app),
+            &"zsh" => print_completions::<Zsh>(&mut app),
+            _ => panic!("Unknown generator"),
+        }
+    } 
+    else {
+        let mut input_name: String = matches.value_of("Pokemon Name").unwrap().into();
+        static dex_json: &'static str = include_str!("pokemon-dex.json");
+        
+        let pokedex: Vec<PokedexEntry> = serde_json::from_str(&dex_json)?; 
+        unsafe {
+            let mut max_dist: usize = 3 as usize;
+            let mut stack_name = &mut input_name;
+            for entry in &pokedex {
+                let mut dist = levenshtein(&entry.name, &stack_name);
 
-    let mut input_name: String = matches.value_of("Pokemon Name").unwrap().into();
-    static dex_json: &'static str = include_str!("pokemon-dex.json");
-    
-    let pokedex: Vec<PokedexEntry> = serde_json::from_str(&dex_json)?; 
-    unsafe {
-        let mut max_dist: usize = 4 as usize;
-        let mut stack_name = &mut input_name;
-        for entry in &pokedex {
-            let mut dist = levenshtein(&entry.name, &stack_name);
-            //println!("Lev Dist: &entry.name, &stack_name = {:?}", &dist);
-            //if dist as u32 == 1 {
-            //    println!("Matched: {}", &entry.name);
-            //}
-            if &dist < &max_dist {
-                *stack_name = entry.name.clone();
-                max_dist = dist;
+                if &dist < &max_dist {
+                    *stack_name = entry.name.clone();
+                    max_dist = dist;
+                }
             }
-        }
-        //println!("{:?}", &stack_name);
-        let entry: Option<PokedexEntry> = pokedex
-            .into_iter()
-            .filter(|entry| &entry.name == stack_name)
-            .next();
+            
+            let entry: Option<PokedexEntry> = pokedex
+                .into_iter()
+                .filter(|entry| &entry.name == stack_name)
+                .next();
 
-        print_pokemon(entry.unwrap());
+            print_pokemon(entry.unwrap());
+        }
     }
-
-    /*let entry: Option<PokedexEntry> = pokedex.into_iter().filter(|entry| &entry.name == &input_name).next();
-    match entry {
-        Some(pokemon) => {
-            print_pokemon(pokemon);
-        },
-        None => {
-            let dirty_dup: Vec<PokedexEntry> = serde_json::from_str(&dex_json)?;
-            let names: Vec<String> = dirty_dup.into_iter().map(|entry| entry.name).collect();
-           
-            eprintln!("Sorry, couldn't find '{}'", &input_name);
-        }
-    }*/
     Ok(())
 }
 
+fn build_cli() -> App<'static> {
+    App::new("Pokedex")
+        .version("0.2.0")
+        .author("Ari Vaniderstine <ari.vaniderstine@embark-studios.com>; David Golembiowski <david[āŧ]dgolembiowski[doŧ]com>")
+        .about("Pokedex CLI built with Rust")
+        .arg(Arg::new("Pokemon Name") 
+            .takes_value(true)
+            .index(1)) 
+        
+        // compgen from clap is on my radar but it's not working out 
+        // with `possible_values` from what I can see.
 
+        /*.arg(Arg::new("gen")
+            .long("gen-completions")
+            .possible_values(&[
+                "bash",
+                "elvish",
+                "fish",
+                "powershell",
+                "zsh"
+            ]))
+         */
+}
 
 #[derive(Debug, Deserialize)]
 struct PokedexEntry {
@@ -137,16 +151,7 @@ struct PokedexEntry {
     description: Option<String>,
     catch_rate: Option<u32>
 }
-/*
-fn get_pokemon(name: &str) {
-    match make_request(name) {
-        Err(e) => handle_error(e),
-        Ok(pokemon)  => {
-            print_pokemon(pokemon);
-        }
-    }
-}
-*/
+
 fn make_request(pokemon: &str) -> Result<Pokemon, reqwest::Error> {
     let uri = format!("https://pokeapi.co/api/v2/pokemon/{}", pokemon);
     reqwest::get(&uri)?.json()
@@ -156,26 +161,27 @@ fn make_request(pokemon: &str) -> Result<Pokemon, reqwest::Error> {
 fn print_pokemon(p: PokedexEntry) {
     println!("ID: {:?}", style(&p.id).cyan());
     println!("Name: {:?}", style(&p.name).magenta());
+    println!("Description: {:?}", style(&p.description.unwrap()).italic());
     println!("Height: {:?}m", p.height as f32/10.0);
     println!("Weight: {:?}kg", p.weight as f32/10.0);
-    println!("Stage: {:?}", &p.stage);
+    //println!("Stage: {:?}", &p.stage);
     println!("Galar dex: {:?}", &p.galar_dex);
     println!("Base stats: {:?}", &p.base_stats);
     println!("Ev yield: {:?}", &p.ev_yield);
     println!("Abilities: {:?}", &p.abilities);
     println!("Types: {:?}", &p.types);
-    println!("Items: {:?}", &p.items);
-    println!("Exp group: {:?}", &p.exp_group);
-    println!("Egg groups: {:?}", &p.egg_groups);
-    println!("Hatch cycles: {:?}", &p.hatch_cycles);
-    println!("Color: {:?}", &p.color);
+    //println!("Items: {:?}", &p.items);
+    //println!("Exp group: {:?}", &p.exp_group);
+    //println!("Egg groups: {:?}", &p.egg_groups);
+    //println!("Hatch cycles: {:?}", &p.hatch_cycles);
+    //println!("Color: {:?}", &p.color);
     println!("Level up moves: {:?}", &p.level_up_moves);
     println!("Egg moves: {:?}", &p.egg_moves);
-    println!("Tms: {:?}", &p.tms);
+    println!("TMs: {:?}", &p.tms);
     println!("TRs:");
     pretty_print_trs(&p.trs);
     println!("Evolutions: {:?}", &p.evolutions);
-    println!("Description: {:?}", &p.description);
+    
     println!("Catch rate: {:?}", &p.catch_rate);
     //let ptypes = get_pokemon_types(p.types);
     //print_types(ptypes);
@@ -199,32 +205,43 @@ impl Tr {
     }
 }
 
-fn pretty_print_trs(entry_trs: &Vec<usize>) -> Result<(), serde_json::error::Error> {
-    println!("Called prtty");
-    //let tr_data: &str = include_str!("tr_data.json");
-    //println!("{:?}", &tr_data);
-    //let mut redux: HashSet<usize> = HashSet::new();
-    //for entry_tr in entry_trs {
-    //    redux.insert(*entry_tr);
-    //}
-    //let trs: Vec<Tr> = serde_json::from_str(&tr_data)?;
-    //println!("&trs = {:?}", &trs);
-    /*let trs: Vec<Tr> = trs
-        .into_iter()
-        .filter(|idx| { *&redux.contains(&idx.no) })
-        .collect();
-    println!("&trs = {:?}", &trs);
-    for tr in trs {
-        println!("{:?}", &tr);
-    }
-    */
+fn pretty_print_trs(entry_trs: &Vec<usize>) -> Result<(), serde_json::error::Error> { 
     match Tr::load() {
         Ok(vec_trs) => {
+            let mut table = Table::new();
+            table
+                .load_preset(UTF8_FULL)
+                .apply_modifier(UTF8_ROUND_CORNERS)
+                .set_content_arrangement(ContentArrangement::Dynamic)
+                //.set_table_width(120)
+                .set_header(vec!["No.", "Move Name", "Type", "Damage", "Effects"]);
             for tr_no in entry_trs {
-                println!("{:?}", vec_trs.index(*tr_no));
-            }     
+                match vec_trs.index(*tr_no) {
+                    Tr { no: tr_no, name: tr_name, type_: tr_type, effects: tr_effects, damage: tr_damage } => {
+                        table.add_row(vec![
+                            Cell::new(format!("{}", &tr_no)),
+                            Cell::new(format!("{}", &tr_name)),
+                            Cell::new(format!("{}", &tr_type)),
+                            match tr_damage {
+                                Some(damage) => { Cell::new(format!("{}", &damage)) }
+                                None => { Cell::new(format!("N/A")) }
+                            },
+                            match tr_effects {
+                                Some(effects) => { Cell::new(format!("{}", &effects)) }
+                                None => { Cell::new(format!("N/A")) }
+                            }
+                        ]);
+                    }
+                    _ => ()
+                }
+                //println!("{:?}", vec_trs.index(*tr_no)); 
+            }
+            println!("{}", table);
         }
-        Err(e) => { println!("{:?}" , &e); }
+        Err(e) => { 
+            println!("{:?}", &e); 
+            println!("This is a bug. Please report it at https://github.com/dmgolembiowski/pokedex-rs"); 
+        }
     }
     Ok(())
 }
