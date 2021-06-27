@@ -11,6 +11,8 @@ use serde::{Deserialize};
 use serde_json;
 //extern crate levenshtein;
 use levenshtein::levenshtein;
+use std::convert::TryInto;
+use std::collections::HashSet;
 
 #[derive(Deserialize)]
 struct Pokemon {
@@ -29,9 +31,7 @@ struct TypeSlot {
 }
 
 #[derive(Deserialize, Debug)]
-struct Type {
-    name: String,
-}
+struct Type(String);
 
 #[derive(Deserialize, Default, Debug)]
 struct TypeEffectiveness {
@@ -73,7 +73,7 @@ fn main() -> Result<(), serde_json::error::Error> {
     
     let pokedex: Vec<PokedexEntry> = serde_json::from_str(&dex_json)?; 
     unsafe {
-        let mut max_dist: usize = 3 as usize;
+        let mut max_dist: usize = 4 as usize;
         let mut stack_name = &mut input_name;
         for entry in &pokedex {
             let mut dist = levenshtein(&entry.name, &stack_name);
@@ -131,8 +131,8 @@ struct PokedexEntry {
     color: String, 
     level_up_moves: Vec<(u32, String)>,
     egg_moves: Vec<String>,
-    tms: Vec<u32>,
-    trs: Vec<u32>,
+    tms: Vec<usize>,
+    trs: Vec<usize>,
     evolutions: Vec<serde_json::Map<String, serde_json::Value>>,
     description: Option<String>,
     catch_rate: Option<u32>
@@ -172,12 +172,61 @@ fn print_pokemon(p: PokedexEntry) {
     println!("Level up moves: {:?}", &p.level_up_moves);
     println!("Egg moves: {:?}", &p.egg_moves);
     println!("Tms: {:?}", &p.tms);
-    println!("Trs: {:?}", &p.trs);
+    println!("TRs:");
+    pretty_print_trs(&p.trs);
     println!("Evolutions: {:?}", &p.evolutions);
     println!("Description: {:?}", &p.description);
     println!("Catch rate: {:?}", &p.catch_rate);
     //let ptypes = get_pokemon_types(p.types);
     //print_types(ptypes);
+}
+//"tr_no": 0, "tr_name": "Swords Dance", "tr_type": "Normal", "tr_effects": "Raises Attack by 2 stages.", "tr_damage": null
+#[derive(Debug, Deserialize)]
+struct Tr {
+    no: usize,
+    name: String,
+    #[serde(rename = "type")]
+    type_: String,
+    effects: Option<String>,
+    damage: Option<f32>
+}
+
+impl Tr {
+    pub fn load() -> Result<Vec<Self>, serde_json::error::Error> {
+        static tr_data: &'static str = include_str!("tr_data.json");
+        let trs: Vec<Self> = serde_json::from_str(&tr_data)?;
+        Ok(trs)
+    }
+}
+
+fn pretty_print_trs(entry_trs: &Vec<usize>) -> Result<(), serde_json::error::Error> {
+    println!("Called prtty");
+    //let tr_data: &str = include_str!("tr_data.json");
+    //println!("{:?}", &tr_data);
+    //let mut redux: HashSet<usize> = HashSet::new();
+    //for entry_tr in entry_trs {
+    //    redux.insert(*entry_tr);
+    //}
+    //let trs: Vec<Tr> = serde_json::from_str(&tr_data)?;
+    //println!("&trs = {:?}", &trs);
+    /*let trs: Vec<Tr> = trs
+        .into_iter()
+        .filter(|idx| { *&redux.contains(&idx.no) })
+        .collect();
+    println!("&trs = {:?}", &trs);
+    for tr in trs {
+        println!("{:?}", &tr);
+    }
+    */
+    match Tr::load() {
+        Ok(vec_trs) => {
+            for tr_no in entry_trs {
+                println!("{:?}", vec_trs.index(*tr_no));
+            }     
+        }
+        Err(e) => { println!("{:?}" , &e); }
+    }
+    Ok(())
 }
 
 fn print_types(ptypes: Vec<String>) {
@@ -216,7 +265,7 @@ fn get_pokemon_types(type_array: Vec<TypeSlot>) -> Vec<String> {
     let mut temp = type_array;
     temp.sort_by(|a, b| a.slot.cmp(&b.slot));
     for t in temp {
-        let type_name = t.type_object.name.to_string();
+        let type_name = t.type_object.0.to_string();
         types.push(type_name);
     }
     types
@@ -225,7 +274,7 @@ fn get_pokemon_types(type_array: Vec<TypeSlot>) -> Vec<String> {
 fn types_to_string(type_array: Vec<Type>) -> String {
     let mut array = Vec::new();
     for t in type_array {
-        let type_name = t.name.to_string();
+        let type_name = t.0.to_string();
         array.push(type_name);
     }
     array.join(", ")
@@ -245,4 +294,18 @@ fn get_type_effectiveness(types: Vec<String>) -> Result<TypeEffectiveness, reqwe
 
 fn handle_error(e: reqwest::Error) {
     println!("{}", e);
+}
+
+pub trait Index<Idx: ?Sized> {
+    type Output: ?Sized;
+
+    fn index(&self, index: Idx) -> &Self::Output;
+}
+
+impl<T> Index<usize> for Vec<T> {
+    type Output = T;
+
+    fn index(&self, index: usize) -> &T {
+        &(**self)[index]
+    }
 }
