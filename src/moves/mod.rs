@@ -1,2 +1,6 @@
-pub mod moves;
-pub use moves;
+mod moves;
+pub use self::moves::{ 
+    Move,
+    MoveTargets,
+    Tm,
+    Tr };
