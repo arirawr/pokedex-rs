@@ -5,13 +5,21 @@ version = "0.1.7"
 authors = ["Ari Vaniderstine <ari.vaniderstine@embark-studios.com>"]
 edition = "2018"
 license = "MIT"
-repository = "https://github.com/arirawr/pokedex-rs"
+repository = "https://github.com/dmgolembiowski/pokedex-rs"
 readme = "README.md"
 categories = ["command-line-utilities"]
 keywords = ["cli", "pokemon", "pokeapi", "pokedex"]
 maintenance = { status = "experimental" }
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+[lib]
+name = "pokedex"
+path = "src/lib.rs"
+
+[[bin]]
+name = "pokedex"
+path = "src/main.rs"
+required-features = ["pokedex"]
+
 
 [dependencies]
 reqwest = "0.9.22"
