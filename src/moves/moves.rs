@@ -105,22 +105,23 @@ impl TryFrom<usize> for Ty {
         }
     }
 }
-
-#[derive(Deserialize)]
+#[derive(Serialize_repr, Deserialize_repr, PartialEq, Debug)]
+#[repr(String)]
 pub enum MoveTargets {
-    All,
-    AllAdjacent,
-    AllAdjacentOpponents,
-    AllAllies,
-    Ally,
-    AllyOrSelf,
-    AnyExceptSelf,
-    Counter,
-    Opponent,
-    RandomOpponent,
+    All                  = "All",
+    AllAdjacent          = "AllAdjacent",
+    AllAdjacentOpponents = "AllAdjacentOpponents",
+    AllAllies            = "AllAllies",
+    Ally                 = "Ally",
+    AllyOrSelf           = "AllyOrSelf",
+    AnyExceptSelf        = "AnyExceptSelf",
+    Counter              = "Counter",
+    Opponent             = "Opponent",
+    RandomOpponent       = "RandomOpponent",
+    
     #[serde(rename = "Self")]
-    Self_,
-    SideAll,
-    SideOpponent,
-    SideSelf
+    Self_        = "Self",
+    SideAll      = "SideAll",
+    SideOpponent = "SideOpponent",
+    SideSelf     = "SideSelf"
 }
