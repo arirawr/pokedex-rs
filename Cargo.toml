@@ -18,7 +18,7 @@ path = "src/lib.rs"
 [[bin]]
 name = "pokedex"
 path = "src/main.rs"
-required-features = ["pokedex"]
+# required-features = ["pokedex"]
 
 
 [dependencies]
@@ -33,3 +33,4 @@ levenshtein = "1.0.5"
 owo-colors = "2.0.0"
 comfy-table = "3.0.0"
 serde_repr = "0.1.7"
+

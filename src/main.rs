@@ -13,6 +13,10 @@ use std::fmt;
 use comfy_table::*;
 use comfy_table::presets::UTF8_FULL;
 use comfy_table::modifiers::UTF8_ROUND_CORNERS;
+//mod moves;
+mod pokedex;
+use crate::pokedex::PokedexEntry;
+//use crate::moves;
 
 #[derive(Deserialize)]
 struct Pokemon {
@@ -75,8 +79,9 @@ fn main() -> Result<(), serde_json::error::Error> {
         }
     } 
     else {
+        /* if let mut Some(input_name) = matches.value_of("Pokemon Name") {} else {} */
         let mut input_name: String = matches.value_of("Pokemon Name").unwrap().into();
-        static dex_json: &'static str = include_str!("pokemon-dex.json");
+        static dex_json: &'static str = include_str!("pokemon-dex-updated.json");
         
         let pokedex: Vec<PokedexEntry> = serde_json::from_str(&dex_json)?; 
         unsafe {
@@ -125,7 +130,7 @@ fn build_cli() -> App<'static> {
             ]))
          */
 }
-
+/*
 #[derive(Debug, Deserialize)]
 struct PokedexEntry {
     id: u32,
@@ -151,7 +156,38 @@ struct PokedexEntry {
     description: Option<String>,
     catch_rate: Option<u32>
 }
-
+*/
+/*
+#[derive(Debug, Deserialize)]
+struct PokedexEntry {
+    id: u32,
+    name: String,
+    stage: u32,
+    galar_dex: Option<String>,
+    base_stats: [u32; 6],
+    ev_yield: [u32; 6],
+    abilities: Vec<String>,
+    types:  Vec<String>,//items":[["None",50],["Silver Powder",5],["None",1]],
+    items: serde_json::Value, //Vec<Option<[Vec<String, u32>;1]>>, //String>,
+    exp_group: String,
+    egg_groups: Vec<String>,
+    hatch_cycles: Option<u32>,
+    height: f32,
+    weight: f32,
+    color: String, 
+    //level_up_moves: Vec<(u32, usize)>,
+    level_up_moves: Vec<(u32, pokedex::MoveId)>,
+    //egg_moves: Vec<usize>,
+    egg_moves: Vec<pokedex::MoveId>,
+    //tms: Vec<usize>,
+    //trs: Vec<usize>,
+    tms: Vec<pokedex::Tm>,
+    trs: Vec<pokedex::Tr>,
+    evolutions: Vec<serde_json::Map<String, serde_json::Value>>,
+    description: Option<String>,
+    catch_rate: Option<u32>
+}
+*/
 fn make_request(pokemon: &str) -> Result<Pokemon, reqwest::Error> {
     let uri = format!("https://pokeapi.co/api/v2/pokemon/{}", pokemon);
     reqwest::get(&uri)?.json()
@@ -178,8 +214,8 @@ fn print_pokemon(p: PokedexEntry) {
     println!("Level up moves: {:?}", &p.level_up_moves);
     println!("Egg moves: {:?}", &p.egg_moves);
     println!("TMs: {:?}", &p.tms);
-    println!("TRs:");
-    pretty_print_trs(&p.trs);
+    println!("TRs: {:?}", &p.trs);
+    //pretty_print_trs(&p.trs);
     println!("Evolutions: {:?}", &p.evolutions);
     
     println!("Catch rate: {:?}", &p.catch_rate);
@@ -187,7 +223,7 @@ fn print_pokemon(p: PokedexEntry) {
     //print_types(ptypes);
 }
 //"tr_no": 0, "tr_name": "Swords Dance", "tr_type": "Normal", "tr_effects": "Raises Attack by 2 stages.", "tr_damage": null
-#[derive(Debug, Deserialize)]
+/*#[derive(Debug, Deserialize)]
 struct Tr {
     no: usize,
     name: String,
@@ -245,7 +281,7 @@ fn pretty_print_trs(entry_trs: &Vec<usize>) -> Result<(), serde_json::error::Err
     }
     Ok(())
 }
-
+*/
 fn print_types(ptypes: Vec<String>) {
     let msg = format!("Types: {}", style(ptypes.join(", ")).yellow());
     println!("{}", msg);

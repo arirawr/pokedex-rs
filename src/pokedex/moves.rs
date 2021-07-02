@@ -4,31 +4,61 @@ use std::convert::TryFrom;
 use std::fmt::Display;
 use serde_repr::*;
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Debug)]
 pub struct Move { 
-    name:      String,
-    move_id:   usize,
-    available: bool,
-    effects:   String,
+    pub name:      String,
+    pub move_id:   MoveId,
+    pub available: bool,
+    pub effects:   String,
 
     #[serde(rename = "type")]
-    ty: Ty,
-    tr: Tr,
-    tm: Tm,
+    pub ty: Ty,
+    pub tr: Tr,
+    pub tm: Tm,
 
-    category: usize,
-    power:    u32,
-    pp:       u32,
-    priority: i32,
-    target:   MoveTargets
+    pub category: usize,
+    pub power:    u32,
+    pub pp:       u32,
+    pub priority: i32,
+    pub target:   MoveTargets
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Debug)]
+pub struct MoveId(usize);
+/*
+#[derive(Deserialize, Debug)]
 pub struct Tr(Option<usize>);
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Debug)]
+pub struct TrNo(usize);
+
+#[derive(Deserialize, Debug)]
 pub struct Tm(Option<usize>);
 
+#[derive(Deserialize, Debug)]
+pub struct TmNo(usize);
+*/
+#[derive(Deserialize, Debug)]
+pub struct Tr(Option<TrNo>);
+
+#[derive(Deserialize, Debug)]
+pub struct TrNo(usize);
+
+#[derive(Deserialize, Debug)]
+pub struct Tm(Option<TmNo>);
+
+#[derive(Deserialize, Debug)]
+pub struct TmNo(usize);
+
+
+
+impl Move {
+    pub fn load_all() -> Result<Vec<Self>, serde_json::error::Error> {
+        static mv_data: &'static str = include_str!("../new-moves.json");
+        let moves: Vec<Self> = serde_json::from_str(&mv_data)?;
+        Ok(moves)
+    }
+}
 #[derive(Serialize_repr, Deserialize_repr, PartialEq, Debug)]
 #[repr(usize)]
 pub enum Ty {
@@ -105,8 +135,57 @@ impl TryFrom<usize> for Ty {
         }
     }
 }
-#[derive(Serialize_repr, Deserialize_repr, PartialEq, Debug)]
-#[repr(String)]
+#[derive(Deserialize, Debug)]
+pub enum MoveTargets {
+    All                 , // = "All",
+    AllAdjacent         , // = "AllAdjacent",
+    AllAdjacentOpponents, // = "AllAdjacentOpponents",
+    AllAllies           , // = "AllAllies",
+    Ally                , // = "Ally",
+    AllyOrSelf          , // = "AllyOrSelf",
+    AnyExceptSelf       , // = "AnyExceptSelf",
+    Counter             , // = "Counter",
+    Opponent            , // = "Opponent",
+    RandomOpponent      , // = "RandomOpponent",
+    
+    #[serde(rename = "Self")]
+    Self_       , // = "Self",
+    SideAll     , // = "SideAll",
+    SideOpponent, // = "SideOpponent",
+    SideSelf    , // = "SideSelf"
+}
+#[derive(Debug, Deserialize)]
+pub struct PokedexEntry {
+    pub id: u32,
+    pub name: String,
+    pub stage: u32,
+    pub galar_dex: Option<String>,
+    pub base_stats: [u32; 6],
+    pub ev_yield: [u32; 6],
+    pub abilities: Vec<String>,
+    pub types:  Vec<String>,//items":[["None",50],["Silver Powder",5],["None",1]],
+    pub items: serde_json::Value, //Vec<Option<[Vec<String, u32>;1]>>, //String>,
+    pub exp_group: String,
+    pub egg_groups: Vec<String>,
+    pub hatch_cycles: Option<u32>,
+    pub height: f32,
+    pub weight: f32,
+    pub color: String, 
+    //level_up_moves: Vec<(u32, usize)>,
+    pub level_up_moves: Vec<(u32, MoveId)>,
+    //egg_moves: Vec<usize>,
+    pub egg_moves: Vec<MoveId>,
+    //tms: Vec<usize>,
+    //trs: Vec<usize>,
+    pub tms: Vec<Tm>,
+    pub trs: Vec<Tr>,
+    pub evolutions: Vec<serde_json::Map<String, serde_json::Value>>,
+    pub description: Option<String>,
+    pub catch_rate: Option<u32>
+}
+//#[derive(Serialize_repr, Deserialize_repr, PartialEq, Debug)]
+//#[repr(String)]
+/*
 pub enum MoveTargets {
     All                  = "All",
     AllAdjacent          = "AllAdjacent",
@@ -125,3 +204,4 @@ pub enum MoveTargets {
     SideOpponent = "SideOpponent",
     SideSelf     = "SideSelf"
 }
+*/
