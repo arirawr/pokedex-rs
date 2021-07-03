@@ -1,5 +1,7 @@
-mod moves;
+pub mod moves;
 pub use self::moves::{ 
+    IntoMove,
+    Level,
     MoveId,
     Move,
     MoveTargets,
