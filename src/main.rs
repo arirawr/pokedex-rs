@@ -222,15 +222,19 @@ fn print_pokemon(p: PokedexEntry) {
 
     let lum: Vec<pokedex::Move> = p.level_up_moves.into_iter().map(|tup: (pokedex::Level, pokedex::MoveId)| tup.1.into_move()).collect();
     println!("Level up moves: {:?}", &lum);
-    println!("Egg moves: {:?}", &p.egg_moves);
+    
+    let egg_mvs: Vec<pokedex::Move> = p.egg_moves.into_iter().map(|eg_mv: pokedex::MoveId| eg_mv.into_move()).collect();
+    println!("Egg moves: {:?}", &egg_mvs);
     
     let tms: Vec<pokedex::Move> = p.tms.into_iter().map(|tm_no: pokedex::TmNo| tm_no.into_move()).collect();
     println!("TMs: {:?}", &tms);
-    println!("TRs: {:?}", &p.trs);
+    
+    let trs: Vec<pokedex::Move> = p.trs.into_iter().map(|tr_no: pokedex::TrNo| tr_no.into_move()).collect();
+    println!("TRs: {:?}", &trs);
     //pretty_print_trs(&p.trs);
     println!("Evolutions: {:?}", &p.evolutions);
     
-    println!("Catch rate: {:?}", &p.catch_rate);
+    //println!("Catch rate: {:?}", &p.catch_rate);
     //let ptypes = get_pokemon_types(p.types);
     //print_types(ptypes);
 }
