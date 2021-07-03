@@ -3,49 +3,62 @@ use serde_json;
 use std::convert::TryFrom;
 use std::fmt::Display;
 use serde_repr::*;
-use cached::proc_macro::cached;
 
 #[derive(Deserialize, Debug)]
 pub struct Move { 
-    pub name:      String,
-    pub move_id:   MoveId,
-    pub available: bool,
-    pub effects:   String,
+    name:      String,
+    move_id:   MoveId,
+    available: bool,
+    effects:   String,
 
     #[serde(rename = "type")]
-    pub ty: Ty,
-    pub tr: Tr,
-    pub tm: Tm,
+    ty: Ty,
+    tr: Tr,
+    tm: Tm,
 
-    pub category: usize,
-    pub power:    u32,
-    pub pp:       u32,
-    pub priority: i32,
-    pub target:   MoveTargets
+    category: usize,
+    power:    u32,
+    pp:       u32,
+    priority: i32,
+    target:   MoveTargets
 }
 
 #[derive(Deserialize, Debug)]
-pub struct Level(u32);
-
-#[derive(Deserialize, Debug, PartialEq)]
 pub struct MoveId(usize);
+/*
+#[derive(Deserialize, Debug)]
+pub struct Tr(Option<usize>);
 
-#[derive(Deserialize, Debug, PartialEq)]
-pub struct Tr(Option<TrNo>);
-
-#[derive(Deserialize, Debug, PartialEq)]
+#[derive(Deserialize, Debug)]
 pub struct TrNo(usize);
 
-#[derive(Deserialize, Debug, PartialEq)]
+#[derive(Deserialize, Debug)]
+pub struct Tm(Option<usize>);
+
+#[derive(Deserialize, Debug)]
+pub struct TmNo(usize);
+*/
+#[derive(Deserialize, Debug)]
+pub struct Tr(Option<TrNo>);
+
+#[derive(Deserialize, Debug)]
+pub struct TrNo(usize);
+
+#[derive(Deserialize, Debug)]
 pub struct Tm(Option<TmNo>);
 
-
-
-#[derive(Deserialize, Debug, PartialEq)]
+#[derive(Deserialize, Debug)]
 pub struct TmNo(usize);
 
 
 
+impl Move {
+    pub fn load_all() -> Result<Vec<Self>, serde_json::error::Error> {
+        static mv_data: &'static str = include_str!("../new-moves.json");
+        let moves: Vec<Self> = serde_json::from_str(&mv_data)?;
+        Ok(moves)
+    }
+}
 #[derive(Serialize_repr, Deserialize_repr, PartialEq, Debug)]
 #[repr(usize)]
 pub enum Ty {
@@ -143,101 +156,52 @@ pub enum MoveTargets {
 }
 #[derive(Debug, Deserialize)]
 pub struct PokedexEntry {
-    pub id: u32,
-    pub name: String,
-    pub stage: u32,
-    pub galar_dex: Option<String>,
-    pub base_stats: [u32; 6],
-    pub ev_yield: [u32; 6],
-    pub abilities: Vec<String>,
-    pub types:  Vec<String>,
-    pub items: serde_json::Value, 
-    pub exp_group: String,
-    pub egg_groups: Vec<String>,
-    pub hatch_cycles: Option<u32>,
-    pub height: f32,
-    pub weight: f32,
-    pub color: String, 
-    pub level_up_moves: Vec<(Level, MoveId)>,
-    pub egg_moves: Vec<MoveId>,
-    pub tms: Vec<TmNo>,
-    pub trs: Vec<TrNo>,
-    pub evolutions: Vec<serde_json::Map<String, serde_json::Value>>,
-    pub description: Option<String>,
-    pub catch_rate: Option<u32>
+    id: u32,
+    name: String,
+    stage: u32,
+    galar_dex: Option<String>,
+    base_stats: [u32; 6],
+    ev_yield: [u32; 6],
+    abilities: Vec<String>,
+    types:  Vec<String>,//items":[["None",50],["Silver Powder",5],["None",1]],
+    items: serde_json::Value, //Vec<Option<[Vec<String, u32>;1]>>, //String>,
+    exp_group: String,
+    egg_groups: Vec<String>,
+    hatch_cycles: Option<u32>,
+    height: f32,
+    weight: f32,
+    color: String, 
+    //level_up_moves: Vec<(u32, usize)>,
+    level_up_moves: Vec<(u32, MoveId)>,
+    //egg_moves: Vec<usize>,
+    egg_moves: Vec<MoveId>,
+    //tms: Vec<usize>,
+    //trs: Vec<usize>,
+    tms: Vec<Tm>,
+    trs: Vec<Tr>,
+    evolutions: Vec<serde_json::Map<String, serde_json::Value>>,
+    description: Option<String>,
+    catch_rate: Option<u32>
 }
-
-impl PokedexEntry {
-    
-    pub fn load_all() -> Vec<PokedexEntry> {
-        static DEX_JSON: &'static str = include_str!("../pokemon-dex-updated.json");
-        let pokedex: Vec<PokedexEntry> = serde_json::from_str(&DEX_JSON)
-            .expect("This will never not work.");
-        pokedex
-    }
-}
-
-impl Move {
-    pub fn load_all() -> Vec<Self> {
-        static MV_DATA: &'static str = include_str!("../new-moves.json");
-        let moves: Vec<Self> = serde_json::from_str(&MV_DATA)
-            .expect("This should never fail");
-        moves
-    }
-}
+//#[derive(Serialize_repr, Deserialize_repr, PartialEq, Debug)]
+//#[repr(String)]
 /*
-pub enum MoveForeignKey {
-    MoveId,
-    TmNo,
-    TrNo
-}*/
-
-pub trait IntoMove {
-    fn into_move(&self) -> Move; 
+pub enum MoveTargets {
+    All                  = "All",
+    AllAdjacent          = "AllAdjacent",
+    AllAdjacentOpponents = "AllAdjacentOpponents",
+    AllAllies            = "AllAllies",
+    Ally                 = "Ally",
+    AllyOrSelf           = "AllyOrSelf",
+    AnyExceptSelf        = "AnyExceptSelf",
+    Counter              = "Counter",
+    Opponent             = "Opponent",
+    RandomOpponent       = "RandomOpponent",
+    
+    #[serde(rename = "Self")]
+    Self_        = "Self",
+    SideAll      = "SideAll",
+    SideOpponent = "SideOpponent",
+    SideSelf     = "SideSelf"
 }
-
-impl IntoMove for MoveId {
-    fn into_move(&self) -> Move {
-        Move::load_all()
-            .into_iter()
-            .nth(self.0)
-            .unwrap()
-    }
-}
-
-impl IntoMove for TmNo {
-    fn into_move(&self) -> Move {
-        Move::load_all()
-            .into_iter()
-            .find(|mv| mv.tm == Tm(Some(TmNo(self.0))))
-            .unwrap()
-    }
-}
-
-impl IntoMove for TrNo {
-    fn into_move(&self) -> Move {
-        Move::load_all()
-            .into_iter()
-            .find(|mv| mv.tr == Tr(Some(TrNo(self.0))))
-            .unwrap()
-    }
-}
-
-impl IntoMove for Tm {
-    fn into_move(&self) -> Move {
-         Move::load_all()
-            .into_iter()
-            .find(|mv| mv.tm == *self)
-            .unwrap()
-    }
-}
-
-impl IntoMove for Tr {
-    fn into_move(&self) -> Move {
-        Move::load_all()
-            .into_iter()
-            .find(|mv| mv.tr == *self)
-            .unwrap()
-    }
-}
-
+*/

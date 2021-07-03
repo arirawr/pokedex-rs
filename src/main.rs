@@ -16,6 +16,7 @@ use comfy_table::modifiers::UTF8_ROUND_CORNERS;
 //mod moves;
 mod pokedex;
 use crate::pokedex::PokedexEntry;
+use crate::pokedex::moves::IntoMove;
 //use crate::moves;
 
 #[derive(Deserialize)]
@@ -83,7 +84,7 @@ fn main() -> Result<(), serde_json::error::Error> {
         let mut input_name: String = matches.value_of("Pokemon Name").unwrap().into();
         static dex_json: &'static str = include_str!("pokemon-dex-updated.json");
         
-        let pokedex: Vec<PokedexEntry> = serde_json::from_str(&dex_json)?; 
+        let pokedex: Vec<PokedexEntry> = pokedex::PokedexEntry::load_all(); //serde_json::from_str(&dex_json)?; 
         unsafe {
             let mut max_dist: usize = 3 as usize;
             let mut stack_name = &mut input_name;
@@ -197,7 +198,11 @@ fn make_request(pokemon: &str) -> Result<Pokemon, reqwest::Error> {
 fn print_pokemon(p: PokedexEntry) {
     println!("ID: {:?}", style(&p.id).cyan());
     println!("Name: {:?}", style(&p.name).magenta());
-    println!("Description: {:?}", style(&p.description.unwrap()).italic());
+    match &p.description {
+        Some(desc) => { println!("Description: {:?}", style(desc).italic()); },
+        None => { println!("Description: [DATA NOT FOUND]"); }
+    }
+   
     println!("Height: {:?}m", p.height as f32/10.0);
     println!("Weight: {:?}kg", p.weight as f32/10.0);
     //println!("Stage: {:?}", &p.stage);
@@ -213,7 +218,8 @@ fn print_pokemon(p: PokedexEntry) {
     //println!("Color: {:?}", &p.color);
     println!("Level up moves: {:?}", &p.level_up_moves);
     println!("Egg moves: {:?}", &p.egg_moves);
-    println!("TMs: {:?}", &p.tms);
+    let tms: Vec<pokedex::Move> = p.tms.into_iter().map(|tm: pokedex::Tm| tm.into_move()).collect();
+    println!("TMs: {:?}", &tms);
     println!("TRs: {:?}", &p.trs);
     //pretty_print_trs(&p.trs);
     println!("Evolutions: {:?}", &p.evolutions);
