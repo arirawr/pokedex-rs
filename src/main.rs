@@ -218,7 +218,8 @@ fn print_pokemon(p: PokedexEntry) {
     //println!("Color: {:?}", &p.color);
     println!("Level up moves: {:?}", &p.level_up_moves);
     println!("Egg moves: {:?}", &p.egg_moves);
-    let tms: Vec<pokedex::Move> = p.tms.into_iter().map(|tm: pokedex::Tm| tm.into_move()).collect();
+    use crate::pokedex::moves::IntoMove;
+    let tms: Vec<pokedex::Move> = p.tms.into_iter().map(|tm_no: pokedex::TmNo| tm_no.into_move()).collect();
     println!("TMs: {:?}", &tms);
     println!("TRs: {:?}", &p.trs);
     //pretty_print_trs(&p.trs);
