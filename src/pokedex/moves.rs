@@ -227,7 +227,7 @@ impl IntoMove for Tm {
     fn into_move(&self) -> Move {
          Move::load_all()
             .into_iter()
-            .find(|mv| mv.tm == *self)
+            .find(|mv| mv.tm.0.as_ref().unwrap().0 == self.0.as_ref().unwrap().0)
             .unwrap()
     }
 }
@@ -236,7 +236,7 @@ impl IntoMove for Tr {
     fn into_move(&self) -> Move {
         Move::load_all()
             .into_iter()
-            .find(|mv| mv.tr == *self)
+            .find(|mv| mv.tr.0.as_ref().unwrap().0 == self.0.as_ref().unwrap().0)
             .unwrap()
     }
 }
