@@ -16,5 +16,3 @@ Current response format:
 ## License / Contributing
 
 Project is MIT-licensed and can be used freely.
-
-Not actively seeking PRs or Issues as I'm still learning the language.
